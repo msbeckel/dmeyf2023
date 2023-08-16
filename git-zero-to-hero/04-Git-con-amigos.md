@@ -56,3 +56,46 @@ origin  https://github.com/dmecoyfin/dmeyf2023.git (fetch)
 origin  https://github.com/dmecoyfin/dmeyf2023.git (push)
 ```
 
+# Ramas
+
+Es en general buena práctica no hacer commits directos a la rama principal
+(`main` o `master`) de un repositorio remoto. Uno hace su código en una rama
+propia "descartable" y luego mezcla (`merge`) los cambios a la rama principal.
+
+Pero qué son las ramas? Hablamos de que git maneja un árbol de versiones. Uno
+puede tener varias versiones basadas en versiones anteriores y que éstas
+diverjan desde un punto común. Se dice que el árbol se dividió en ramas.
+
+Para crear ramas uno puede hacerlo con el commando `git branch`:
+
+```shell
+$ git branch mi-version-alternativa
+$
+```
+
+Con esto, git creó la rama pero no cambió a ella. Para eso hay que usar el
+comando `git checkout`:
+
+```shell
+$ git checkout mi-version-alternativa
+Cambiado a rama 'mi-version-alternativa'
+$ git status
+En la rama mi-version-alternativa
+nada para hacer commit, el árbol de trabajo está limpio
+```
+
+> ;) Y qué pasaría si usamos nuestro `git tree` ahora?
+
+Todos los commits que hagamos ahora se harán sobre la rama actual sin afectar
+al resto.
+
+# Reconectar ramas
+
+Ahora qué pasa cuando uno quiere incorporar los cambios de una rama a la
+principal? Fácil, se usa el comando `git merge`. Pero tiene unas cositas
+a tener en cuenta. Uno debe estar en la rama a la que quiere traer los cambios
+(moverse con `git checkout` y verificar con `git status`). Luego usar
+`git merge <nombre de rama a traer>`. Git hará lo posible por mezclar los
+cambios. Si surge un conflicto en el `git status` aparecerá y nos dará las
+instrucciones de como avanzar una vez resuelto el conflicto o como deshacer el
+merge.
