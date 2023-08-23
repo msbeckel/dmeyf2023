@@ -5,6 +5,8 @@
 require("data.table")
 require("rpart")
 require("rpart.plot")
+require("httpgd")
+hgd()
 
 # Aqui se debe poner la carpeta de la materia de SU computadora local
 setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023") # Establezco el Working Directory
@@ -14,6 +16,7 @@ dataset <- fread("./data/competencia_01.csv")
 
 dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar
 dapply <- dataset[foto_mes == 202105] # defino donde voy a aplicar el modelo
+
 
 # genero el modelo,  aqui se construye el arbol
 # quiero predecir clase_ternaria a partir de el resto de las variables
@@ -34,6 +37,8 @@ prp(modelo,
         branch = 1, type = 4, varlen = 0, faclen = 0
 )
 
+var.imp <- varImp(modelo)
+plot(var.imp)
 
 # aplico el modelo a los datos nuevos
 prediccion <- predict(
