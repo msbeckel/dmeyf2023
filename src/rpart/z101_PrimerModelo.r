@@ -5,6 +5,7 @@
 require("data.table")
 require("rpart")
 require("rpart.plot")
+library(caret)
 require("httpgd")
 hgd()
 
@@ -17,6 +18,25 @@ dataset <- fread("./data/competencia_01.csv")
 dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar
 dapply <- dataset[foto_mes == 202105] # defino donde voy a aplicar el modelo
 
+# exploratory analysis
+
+# preprocess ----
+znzv = TRUE
+trans = TRUE
+# Zero and Near-Zero-Variance Predictors
+if(znzv){
+        nzv <- nearZeroVar(dtrain, saveMetrics= TRUE)
+        nzv[nrow(nzv),'nzv'] = FALSE #fuerzo a que la variable a predecir no se nzv
+        dtrain <- dtrain[, !nzv$nzv, with=FALSE] 
+        dapply <- dapply[, !nzv$nzv, with=FALSE]
+}
+
+#Data imputation/transformacion
+if(trans){
+        tData <- preProcess(dtrain[, -82, with=FALSE], c("BoxCox", "center", "scale", "knnImpute"))
+        dtrain[, -82, with=FALSE] = predict(tData, dtrain[, -82, with=FALSE])
+        dapply[, -82, with=FALSE] = predict(tData, dapply[, -82, with=FALSE])
+}
 
 # genero el modelo,  aqui se construye el arbol
 # quiero predecir clase_ternaria a partir de el resto de las variables
@@ -37,8 +57,10 @@ prp(modelo,
         branch = 1, type = 4, varlen = 0, faclen = 0
 )
 
-var.imp <- varImp(modelo)
-plot(var.imp)
+# feature importance
+importance <- modelo$variable.importance
+importance <- round(100 * importance / sum(importance), 1)
+importance[importance >= 1]
 
 # aplico el modelo a los datos nuevos
 prediccion <- predict(
@@ -61,10 +83,10 @@ dapply[, Predicted := as.numeric(prob_baja2 > 1 / 40)]
 # genero el archivo para Kaggle
 # primero creo la carpeta donde va el experimento
 dir.create("./exp/")
-dir.create("./exp/KA2001")
+dir.create("./exp/KA2002")
 
 # solo los campos para Kaggle
 fwrite(dapply[, list(numero_de_cliente, Predicted)],
-        file = "./exp/KA2001/K101_001.csv",
+        file = "./exp/KA2002/K101_001.csv",
         sep = ","
 )
