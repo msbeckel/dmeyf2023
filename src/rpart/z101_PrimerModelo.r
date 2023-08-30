@@ -33,9 +33,14 @@ if(znzv){
 
 #Data imputation/transformacion
 if(trans){
-        tData <- preProcess(dtrain[, -82, with=FALSE], c("BoxCox", "center", "scale", "knnImpute"))
-        dtrain[, -82, with=FALSE] = predict(tData, dtrain[, -82, with=FALSE])
-        dapply[, -82, with=FALSE] = predict(tData, dapply[, -82, with=FALSE])
+        tmp = as.data.frame(dtrain)
+        tData <- preProcess(tmp[, c(-1, -82)], c("center", "scale", "knnImpute"))
+        #dtrain
+        tmp[, c(-1, -82)] = predict(tData, tmp[, c(-1, -82)]); dtrain = setDT(tmp)
+        #dapply
+        tmp = as.data.frame(dapply)
+        tmp[, c(-1, -82)] = predict(tData, tmp[, c(-1, -82)]); dapply = setDT(tmp); rm(tmp); gc()
+        
 }
 
 # genero el modelo,  aqui se construye el arbol
@@ -83,10 +88,10 @@ dapply[, Predicted := as.numeric(prob_baja2 > 1 / 40)]
 # genero el archivo para Kaggle
 # primero creo la carpeta donde va el experimento
 dir.create("./exp/")
-dir.create("./exp/KA2002")
+dir.create("./exp/KA2001")
 
 # solo los campos para Kaggle
 fwrite(dapply[, list(numero_de_cliente, Predicted)],
-        file = "./exp/KA2002/K101_001.csv",
+        file = "./exp/KA2001/K101_002.csv",
         sep = ","
 )
