@@ -1,0 +1,2 @@
+cp	max_depth	mb	min_split	ganancia_promedio
+-1	4	1	1000	117138000

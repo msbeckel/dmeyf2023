@@ -7,7 +7,9 @@ require("parallel")
 
 PARAM <- list()
 # reemplazar por las propias semillas
-PARAM$semillas <- c(102191, 200177, 410551, 552581, 892237)
+semillas <- c(594697, 594709, 594721, 594739, 594749)
+
+PARAM$semillas <- semillas
 
 #------------------------------------------------------------------------------
 # particionar agrega una columna llamada fold a un dataset que consiste
@@ -78,10 +80,10 @@ ArbolEstimarGanancia <- function(semilla, param_basicos) {
 #------------------------------------------------------------------------------
 
 # Aqui se debe poner la carpeta de la computadora local
-setwd("X:\\gdrive\\uba2023\\") # Establezco el Working Directory
+setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/")
 
 # cargo los datos
-dataset <- fread("./datasets/competencia_01.csv")
+dataset <- fread("./data/competencia_01.csv")
 
 # trabajo solo con los datos con clase, es decir 202103
 dataset <- dataset[foto_mes==202103]
@@ -95,7 +97,7 @@ param_basicos <- list(
 ) # profundidad máxima del arbol
 
 # Un solo llamado, con la semilla 17
-ArbolEstimarGanancia(17, param_basicos)
+ArbolEstimarGanancia(semillas[1], param_basicos)
 
 
 # la funcion mcmapply  llama a la funcion ArbolEstimarGanancia
@@ -104,7 +106,7 @@ salidas <- mcmapply(ArbolEstimarGanancia,
   PARAM$semillas, # paso el vector de semillas
   MoreArgs = list(param_basicos), # aqui paso el segundo parametro
   SIMPLIFY = FALSE,
-  mc.cores = 1
+  mc.cores = 5
 ) # se puede subir a 5 si posee Linux o Mac OS
 
 # muestro la lista de las salidas en testing
