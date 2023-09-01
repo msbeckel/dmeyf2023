@@ -8,10 +8,13 @@ gc() # Garbage Collection
 require("data.table")
 require("rpart")
 require("parallel")
+options(bitmapType = "cairo")
 
 PARAM <- list()
 # reemplazar por las propias semillas
-PARAM$semillas <- c(102191, 200177, 410551, 552581, 892237)
+semillas <- c(594697, 594709, 594721, 594739, 594749)
+
+PARAM$semillas <- semillas
 
 #------------------------------------------------------------------------------
 # particionar agrega una columna llamada fold a un dataset
@@ -78,7 +81,7 @@ ArbolesMontecarlo <- function(semillas, param_basicos) {
     semillas, # paso el vector de semillas
     MoreArgs = list(param_basicos), # aqui paso el segundo parametro
     SIMPLIFY = FALSE,
-    mc.cores = 1
+    mc.cores = 5
   ) # se puede subir a 5 si posee Linux o Mac OS
 
   ganancia_promedio <- mean(unlist(ganancias))
@@ -89,11 +92,11 @@ ArbolesMontecarlo <- function(semillas, param_basicos) {
 #------------------------------------------------------------------------------
 
 # Aqui se debe poner la carpeta de la computadora local
-setwd("~/buckets/b1/") # Establezco el Working Directory
+setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/")
 # cargo los datos
 
 # cargo los datos
-dataset <- fread("./datasets/dataset_pequeno.csv")
+dataset <- fread("./data/competencia_01.csv")
 
 # trabajo solo con los datos con clase, es decir 202107
 dataset <- dataset[clase_ternaria != ""]
@@ -112,37 +115,50 @@ archivo_salida <- "./exp/HT2020/gridsearch.txt"
 cat(
   file = archivo_salida,
   sep = "",
+  "cp", "\t",
   "max_depth", "\t",
+  "mb", "\t",
   "min_split", "\t",
   "ganancia_promedio", "\n"
 )
 
 
 # itero por los loops anidados para cada hiperparametro
+t0 <- Sys.time()
+for (cp in c(-1)){
+    for (vmax_depth in c(4, 6, 8, 10, 12, 14)) {
+      for (vmin_split in c(1000, 800, 600, 400, 200, 100, 50, 20, 10)) {
+        for (mb in c(c(1, as.integer(vmin_split / 2)))){
+          # notar como se agrega
 
-for (vmax_depth in c(4, 6, 8, 10, 12, 14)) {
-  for (vmin_split in c(1000, 800, 600, 400, 200, 100, 50, 20, 10)) {
-    # notar como se agrega
+          # vminsplit  minima cantidad de registros en un nodo para hacer el split
+          param_basicos <- list(
+            "cp" = cp, # complejidad minima
+            "minsplit" = vmin_split,
+            "minbucket" = mb, # minima cantidad de registros en una hoja
+            "maxdepth" = vmax_depth
+          ) # profundidad máxima del arbol
 
-    # vminsplit  minima cantidad de registros en un nodo para hacer el split
-    param_basicos <- list(
-      "cp" = -0.5, # complejidad minima
-      "minsplit" = vmin_split,
-      "minbucket" = 5, # minima cantidad de registros en una hoja
-      "maxdepth" = vmax_depth
-    ) # profundidad máxima del arbol
+          # Un solo llamado, con la semilla 17
+          ganancia_promedio <- ArbolesMontecarlo(semillas, param_basicos)
 
-    # Un solo llamado, con la semilla 17
-    ganancia_promedio <- ArbolesMontecarlo(ksemillas, param_basicos)
-
-    # escribo los resultados al archivo de salida
-    cat(
-      file = archivo_salida,
-      append = TRUE,
-      sep = "",
-      vmax_depth, "\t",
-      vmin_split, "\t",
-      ganancia_promedio, "\n"
-    )
+          # escribo los resultados al archivo de salida
+          cat(
+            file = archivo_salida,
+            append = TRUE,
+            sep = "",
+            cp, "\t",
+            vmax_depth, "\t",
+            mb, "\t",
+            vmin_split, "\t",
+            ganancia_promedio, "\n"
+          )
+        }
+      }
   }
 }
+tiempo <- as.numeric(Sys.time() - t0)
+
+#Leo los resultados
+res = fread("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/exp/HT2020/gridsearch.txt")
+View(res[order(-ganancia_promedio)])
