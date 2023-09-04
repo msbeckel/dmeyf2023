@@ -1,6 +1,6 @@
 # Arbol elemental con libreria  rpart
 # Debe tener instaladas las librerias  data.table  ,  rpart  y  rpart.plot
-rm(list=ls())
+rm(list = ls())
 gc()
 
 # cargo las librerias que necesito
@@ -8,45 +8,59 @@ require("data.table")
 require("rpart")
 require("rpart.plot")
 library(caret)
+options(bitmapType = "cairo")
 require("httpgd")
 hgd()
 
 # Aqui se debe poner la carpeta de la materia de SU computadora local
 setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023") # Establezco el Working Directory
 
+
 # cargo el dataset
 dataset <- fread("./data/competencia_01.csv")
 
+# Feature Engineering
+dataset[, antiguedad_edad := (cliente_antiguedad / 12) / cliente_edad]
+dataset[, nivel_mrentabilidad := ifelse(cliente_antiguedad > 11, as.numeric(mrentabilidad > (mrentabilidad_annual / 12)), as.numeric(mrentabilidad > (mrentabilidad_annual / cliente_antiguedad)))]
+dataset[, monto_transaccion := mautoservicio / ctarjeta_debito_transacciones]
+dataset[, monto_pp := ifelse(cprestamos_personales > 0, mprestamos_personales / cprestamos_personales, 0)]
+dataset[, monto_ppr := ifelse(cprestamos_prendarios > 0, mprestamos_prendarios / cprestamos_prendarios, 0)]
+dataset[, monto_ph := ifelse(cprestamos_hipotecarios > 0, mprestamos_hipotecarios / cprestamos_hipotecarios, 0)]
+dataset[, monto_pf := ifelse(cplazo_fijo > 0, (mplazo_fijo_dolares + mplazo_fijo_pesos) / cplazo_fijo, 0)]
+dataset[, monto_i1 := ifelse(cinversion1 > 0, (minversion1_pesos + minversion1_dolares) / cinversion1, 0)]
+dataset[, monto_i2 := ifelse(cinversion2 > 0, (minversion2) / cinversion1, 0)]
+dataset[, cseguro := cseguro_vida + cseguro_auto + cseguro_vivienda + cseguro_accidentes_personales]
+dataset[, ifpayroll := ifelse(cpayroll_trx > 0, 1, 0)]
+dataset[, monto_da := ifelse(ccuenta_debitos_automaticos > 0, mcuenta_debitos_automaticos / ccuenta_debitos_automaticos, 0)]
+
+
+# Slice data
 dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar
 dapply <- dataset[foto_mes == 202105] # defino donde voy a aplicar el modelo
 
-# exploratory analysis
+if (FALSE) {
+        # Near zero variance variables
+        target <- which(colnames(dtrain) == "clase_ternaria")
+        nzv <- nearZeroVar(dtrain, saveMetrics = TRUE)
+        nzv[target, "nzv"] <- FALSE # fuerzo a que la variable a predecir no se nzv
+        dtrain <- dtrain[, !nzv$nzv, with = FALSE]
+        dapply <- dapply[, !nzv$nzv, with = FALSE]
 
-# preprocess ----
-znzv = TRUE
-trans = TRUE
-# Zero and Near-Zero-Variance Predictors
-if(znzv){
-        nzv <- nearZeroVar(dtrain, saveMetrics= TRUE)
-        nzv[nrow(nzv),'nzv'] = FALSE #fuerzo a que la variable a predecir no se nzv
-        dtrain <- dtrain[, !nzv$nzv, with=FALSE] 
-        dapply <- dapply[, !nzv$nzv, with=FALSE]
+        # Transform variables
+        target <- which(colnames(dtrain) == "clase_ternaria")
+        tmp <- as.data.frame(dtrain)
+        tData <- preProcess(tmp[, c(-1, -target)], c("medianImpute"))
+        # dtrain
+        tmp[, c(-1, -target)] <- predict(tData, tmp[, c(-1, -target)])
+        dtrain <- setDT(tmp)
+        # dtest
+        tmp <- as.data.frame(dapply)
+        tmp[, c(-1, -target)] <- predict(tData, tmp[, c(-1, -target)])
+        dapply <- setDT(tmp)
 }
-
-#Data imputation/transformacion
-if(trans){
-        tmp = as.data.frame(dtrain)
-        tData <- preProcess(tmp[, c(-1, -82)], c("center", "scale", "medianImpute", "pca"))
-        #dtrain
-        tmp[, c(-1, -82)] = predict(tData, tmp[, c(-1, -82)]); dtrain = setDT(tmp)
-        #dapply
-        tmp = as.data.frame(dapply)
-        tmp[, c(-1, -82)] = predict(tData, tmp[, c(-1, -82)]); dapply = setDT(tmp); rm(tmp); gc()
-        
-}
-
 # genero el modelo,  aqui se construye el arbol
 # quiero predecir clase_ternaria a partir de el resto de las variables
+
 modelo <- rpart(
         formula = "clase_ternaria ~ .",
         data = dtrain, # los datos donde voy a entrenar
@@ -57,6 +71,15 @@ modelo <- rpart(
         maxdepth = 12
 ) # profundidad maxima del arbol
 
+modelo <- rpart(
+        formula = "clase_ternaria ~ .",
+        data = dtrain, # los datos donde voy a entrenar
+        xval = 0,
+        cp = -0.8055, # esto significa no limitar la complejidad de los splits
+        minsplit = 1407, # minima cantidad de registros para que se haga el split
+        minbucket = 421, # tamaño minimo de una hoja
+        maxdepth = 7
+)
 
 # grafico el arbol
 prp(modelo,
@@ -94,6 +117,6 @@ dir.create("./exp/KA2001")
 
 # solo los campos para Kaggle
 fwrite(dapply[, list(numero_de_cliente, Predicted)],
-        file = "./exp/KA2001/K101_006.csv",
+        file = "./exp/KA2001/K101_010.csv",
         sep = ","
 )
