@@ -32,7 +32,13 @@ dataset[, monto_i2 := ifelse(cinversion2 > 0, (minversion2) / cinversion1, 0)]
 dataset[, cseguro := cseguro_vida + cseguro_auto + cseguro_vivienda + cseguro_accidentes_personales]
 dataset[, ifpayroll := ifelse(cpayroll_trx > 0, 1, 0)]
 dataset[, monto_da := ifelse(ccuenta_debitos_automaticos > 0, mcuenta_debitos_automaticos / ccuenta_debitos_automaticos, 0)]
+dataset[, descuentos_comisiones := (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) / (mcomisiones_mantenimiento + mcomisiones_otras)]
+dataset[, bin_Master_mlimitecompra := as.numeric(arules::discretize(dataset$Master_mlimitecompra, method = "cluster", breaks = 5, labels = c(1, 2, 3, 4, 5)))]
+dataset[, bin_Visa_mlimitecompra := as.numeric(arules::discretize(dataset$Visa_mlimitecompra, method = "cluster", breaks = 5, labels = c(1, 2, 3, 4, 5)))]
 
+
+cols <- colnames(dataset)[grepl(pattern = "^m|^(Visa|Master)_m", colnames(dataset))]
+dataset[, (cols) := lapply(.SD, order), .SDcols = cols, by = foto_mes]
 
 # Slice data
 dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar
@@ -117,6 +123,6 @@ dir.create("./exp/KA2001")
 
 # solo los campos para Kaggle
 fwrite(dapply[, list(numero_de_cliente, Predicted)],
-        file = "./exp/KA2001/K101_010.csv",
+        file = "./exp/KA2001/K101_011.csv",
         sep = ","
 )
