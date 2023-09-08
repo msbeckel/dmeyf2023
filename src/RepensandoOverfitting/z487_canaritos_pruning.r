@@ -6,10 +6,10 @@ require("data.table")
 require("rpart")
 require("rpart.plot")
 
-setwd("~/buckets/b1/") # establezco la carpeta donde voy a trabajar
+setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023") # Establezco el Working Directory
 
 # cargo el dataset
-dataset <- fread("./datasets/competencia_01.csv")
+dataset <- fread("./data/competencia_01.csv")
 
 dir.create("./exp/", showWarnings = FALSE)
 dir.create("./exp/EA4870/", showWarnings = FALSE)
@@ -23,23 +23,23 @@ set.seed(102191)
 # agrego canaritos randomizados
 dataset2 <- copy(dataset)
 # quito algunas variables de dataset2
-dataset2[ , numero_de_cliente := NULL ]
-dataset2[ , clase_ternaria := NULL ]
-dataset2[ , foto_mes := NULL ]
+dataset2[, numero_de_cliente := NULL]
+dataset2[, clase_ternaria := NULL]
+dataset2[, foto_mes := NULL]
 
 # agrego azar
-dataset2[ , azar := runif( nrow(dataset2) ) ]
+dataset2[, azar := runif(nrow(dataset2))]
 # randomizo, manteniendo las relaciones entre las variables
-setorder( dataset2, azar )
-dataset2[ , azar := NULL ]  # borra azar
+setorder(dataset2, azar)
+dataset2[, azar := NULL] # borra azar
 
 columnas <- copy(colnames(dataset2))
 
 # creo efectivamente los canaritos
 #  1/5  de las variables del dataset
-for( i in sample( 1:ncol(dataset2) , round( ncol(dataset)/5 ) )  )
+for (i in sample(1:ncol(dataset2), round(ncol(dataset) / 5)))
 {
-  dataset[, paste0("canarito", i) :=  dataset2[ , get(columnas[i]) ]  ]
+    dataset[, paste0("canarito", i) := dataset2[, get(columnas[i])]]
 }
 
 
@@ -82,4 +82,3 @@ entrega <- as.data.table(list(
 ))
 
 fwrite(entrega, paste0("stopping_at_canaritos.csv"), sep = ",")
-

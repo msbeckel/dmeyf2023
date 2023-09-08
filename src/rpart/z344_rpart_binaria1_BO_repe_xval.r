@@ -21,14 +21,14 @@ require("mlrMBO")
 # Defino la  Optimizacion Bayesiana
 PARAM <- list()
 
-PARAM$home <- "~/buckets/b1/"
+PARAM$home <- "/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/"
 
 PARAM$experimento <- "HT3440"
 
 # Aqui van las 10 semillas que hacen el 10-repeated
 #  si se pone una sola semilla, se esta haciendo solo 5-fold xval
 PARAM$semilla_azar <- c(
-  102191, 200177, 410551, 552581, 892237,
+   594697, 594709, 594721, 594739, 594749,
   753587, 247759, 253369, 955127, 800519
 )
 
@@ -208,7 +208,7 @@ EstimarGanancia <- function(x) {
 setwd(PARAM$home)
 
 # cargo los datos
-dataset <- fread("./datasets/competencia_01.csv")
+dataset <- fread("./data/competencia_01.csv")
 # entreno en 202103
 dataset <- dataset[foto_mes == 202103]
 

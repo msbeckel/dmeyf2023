@@ -126,3 +126,66 @@ fwrite(dapply[, list(numero_de_cliente, Predicted)],
         file = "./exp/KA2001/K101_011.csv",
         sep = ","
 )
+
+
+#---------------------------------------------------------------#
+#Entrenamiento a partir de clase binaria
+
+# cargo el dataset
+dataset <- fread("./data/competencia_01.csv")
+
+dataset[, clase_virtual := ifelse(clase_ternaria == "CONTINUA", "NEG", "POS")]
+dataset[,clase_ternaria := NULL]
+
+# Slice data
+dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar
+dapply <- dataset[foto_mes == 202105] # defino donde voy a aplicar el modelo
+
+
+modelo <- rpart(
+        formula = "clase_virtual ~ .",
+        data = dtrain, # los datos donde voy a entrenar
+        xval = 0,
+        cp = -0.4264, # esto significa no limitar la complejidad de los splits
+        minsplit = 1966, # minima cantidad de registros para que se haga el split
+        minbucket = 380, # tamaño minimo de una hoja
+        maxdepth = 7
+)
+
+
+# feature importance
+importance <- modelo$variable.importance
+importance <- round(100 * importance / sum(importance), 1)
+importance[importance >= 1]
+
+# aplico el modelo a los datos nuevos
+prediccion <- predict(
+        object = modelo,
+        newdata = dapply,
+        type = "prob"
+)
+
+# prediccion es una matriz con TRES columnas,
+# llamadas "BAJA+1", "BAJA+2"  y "CONTINUA"
+# cada columna es el vector de probabilidades
+
+# agrego a dapply una columna nueva que es la probabilidad de BAJA+2
+dapply[, prob_baja2 := prediccion[, "POS"]]
+
+# solo le envio estimulo a los registros
+#  que se encuentren por arriba de corte
+corte = 8789
+estimulo = order(dapply$prob_baja2, decreasing=T)[1:corte]
+dapply$Predicted = 0
+dapply[estimulo, 'Predicted'] = 1
+
+# genero el archivo para Kaggle
+# primero creo la carpeta donde va el experimento
+dir.create("./exp/")
+dir.create("./exp/KA2001")
+
+# solo los campos para Kaggle
+fwrite(dapply[, list(numero_de_cliente, Predicted)],
+        file = "./exp/KA2001/K101_013.csv",
+        sep = ","
+)
