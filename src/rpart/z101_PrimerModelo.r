@@ -38,7 +38,7 @@ dataset[, bin_Visa_mlimitecompra := as.numeric(arules::discretize(dataset$Visa_m
 
 
 cols <- colnames(dataset)[grepl(pattern = "^m|^(Visa|Master)_m", colnames(dataset))]
-dataset[, (cols) := lapply(.SD, order), .SDcols = cols, by = foto_mes]
+dataset[, (cols) := lapply(.SD, function(x){frank(x, na.last= "keep", ties.method = "dense")}), .SDcols = cols, by = foto_mes]
 
 # Slice data
 dtrain <- dataset[foto_mes == 202103] # defino donde voy a entrenar

@@ -1,0 +1,2 @@
+fecha	minsplit	minbucket	maxdepth	corte	cp	ganancia	iteracion
+20230908 205647	1145	275	8	9015	-1	57.56287	1

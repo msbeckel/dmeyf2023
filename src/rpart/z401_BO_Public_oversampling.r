@@ -1,6 +1,6 @@
 # Optimizacion Bayesiana de hiperparametros de  rpart
 # que va directamente contra el Public Leaderboard
-# este script AUN no entrena en un dataset con oversampling de los BAJA+2
+# este script AHORA entrena en un dataset con oversampling de los BAJA+2
 
 # dedicado a Federico Idoeta, Impossible is Nothing,  02-sep-2022
 
@@ -22,7 +22,7 @@ require("mlrMBO")
 
 # Defino la  Optimizacion Bayesiana
 PARAM <- list()
-PARAM$experimento <- "HT3990"
+PARAM$experimento <- "HT4010"
 
 # cantidad de iteraciones de la Optimizacion Bayesiana
 PARAM$BO_iter <- 24  # iteraciones inteligentes   24= 40 - 4*4
@@ -110,7 +110,8 @@ ArbolSimple <- function( data, param, iteracion) {
   modelo <- rpart("clase_binaria ~ . - clase_ternaria",
     data = dtrain,
     xval = 0,
-    control = param2
+    control = param2,
+    weights = pesos # aqui se hace oversampling
   )
 
   # aplico el modelo a los datos de testing
@@ -183,6 +184,9 @@ dataset[ , clase_binaria := ifelse( clase_ternaria=="CONTINUA", "NEG", "POS" ) ]
 
 dtrain <- dataset[foto_mes==202103]
 dapply <- dataset[foto_mes==202105]
+
+# definicion vector de pesos para oversampling
+pesos <- copy( dtrain[, ifelse( clase_ternaria=="CONTINUA",   1.0, 100.0)])
 
 # creo la carpeta donde va el experimento
 #  HT  representa  Hiperparameter Tuning
