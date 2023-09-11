@@ -19,20 +19,22 @@ require("parallel")
 require("DiceKriging")
 require("mlrMBO")
 
+options(bitmapType = "cairo")
+require(ggplot2)
 
 # Defino la  Optimizacion Bayesiana
 PARAM <- list()
 PARAM$experimento <- "HT4010"
 
 # cantidad de iteraciones de la Optimizacion Bayesiana
-PARAM$BO_iter <- 24  # iteraciones inteligentes   24= 40 - 4*4
+PARAM$BO_iter <- 24 # iteraciones inteligentes   24= 40 - 4*4
 
 #  de los hiperparametros
 PARAM$hs <- makeParamSet(
   makeIntegerParam("minsplit", lower = 500L, upper = 1500L),
   makeIntegerParam("minbucket", lower = 200L, upper = 800L),
   makeIntegerParam("maxdepth", lower = 6L, upper = 12L),
-  makeIntegerParam("corte", lower = 8000L, upper = 10000L),
+  makeIntegerParam("corte", lower = 9500L, upper = 9500L),
   forbidden = quote(minbucket > 0.5 * minsplit)
 )
 # minbuket NO PUEDE ser mayor que la mitad de minsplit
@@ -41,29 +43,28 @@ PARAM$semilla_azar <- c(594697, 594709, 594721, 594739, 594749)[1]
 
 #------------------------------------------------------------------------------
 
-leer_numero <- function( mensaje ) {
-  res <- readline( mensaje )
-  while( is.na( as.numeric( res ))) {
-    cat( "Debe introducit un numero, el separador decimal es la coma\n" )
-    res <- readline( mensaje )
+leer_numero <- function(mensaje) {
+  res <- readline(mensaje)
+  while (is.na(as.numeric(res))) {
+    cat("Debe introducit un numero, el separador decimal es la coma\n")
+    res <- readline(mensaje)
   }
 
-  return( as.numeric(res) )
+  return(as.numeric(res))
 }
 #------------------------------------------------------------------------------
 
-leer_verificado <- function( mensaje ) {
+leer_verificado <- function(mensaje) {
   repeat {
-  
-    n1 <- leer_numero( mensaje )
-    cat( "Por favor, vuelva a cargar el mismo numero\n" )
-    n2 <- leer_numero( mensaje )
+    n1 <- leer_numero(mensaje)
+    cat("Por favor, vuelva a cargar el mismo numero\n")
+    n2 <- leer_numero(mensaje)
 
-   if( n1 != n2 )  cat( "Los numeros no coinciden, debe volver a cargar\n\n" )
-   if( n1== n2 ) break
+    if (n1 != n2) cat("Los numeros no coinciden, debe volver a cargar\n\n")
+    if (n1 == n2) break
   }
 
-  return( n1 )
+  return(n1)
 }
 #------------------------------------------------------------------------------
 # graba a un archivo los componentes de lista
@@ -99,11 +100,10 @@ loguear <- function(reg, arch = NA, folder = "./work/", ext = ".txt",
 #----------------------------------------------------------------------------
 # param tiene los hiperparametros del arbol
 
-ArbolSimple <- function( data, param, iteracion) {
-
-  param2 <- copy( param )
+ArbolSimple <- function(data, param, iteracion) {
+  param2 <- copy(param)
   param2$cp <- -1
-  param2$minsplit <- param$minsplit 
+  param2$minsplit <- param$minsplit
   param2$minbucket <- param$minbucket
   param2$corte <- param$corte
 
@@ -125,24 +125,27 @@ ArbolSimple <- function( data, param, iteracion) {
   # esta es la probabilidad de baja
   prob_baja <- prediccion[, "POS"]
 
-  tablita <- copy( dapply[, list(numero_de_cliente) ] )
-  tablita[ , prob := prob_baja ]
-  setorder( tablita, -prob )
+  tablita <- copy(dapply[, list(numero_de_cliente)])
+  tablita[, prob := prob_baja]
+  setorder(tablita, -prob)
 
   # grabo el submit a Kaggle
-  tablita[ , Predicted := 0L ]
-  tablita[ 1:param2$corte, Predicted := 1L ]
+  tablita[, Predicted := 0L]
+  tablita[1:param2$corte, Predicted := 1L]
 
-  nom_submit <- paste0("z399_", sprintf( "%03d", iteracion ), ".csv" )
-  fwrite( tablita[ , list(numero_de_cliente, Predicted)],
-          file= nom_submit,
-          sep= "," )
+  nom_submit <- paste0("z401_", sprintf("%03d", iteracion), ".csv")
+  fwrite(tablita[, list(numero_de_cliente, Predicted)],
+    file = nom_submit,
+    sep = ","
+  )
 
   # solicito que el humano a cargo ingrese la ganancia publica
-  mensaje <- paste0( "haga el submit a Kaggle de ", nom_submit,
-                     " y cargue la ganancia publica : " )
+  mensaje <- paste0(
+    "haga el submit a Kaggle de ", nom_submit,
+    " y cargue la ganancia publica : "
+  )
 
-  ganancia_public <- leer_verificado( mensaje )
+  ganancia_public <- leer_verificado(mensaje)
 
   return(ganancia_public)
 }
@@ -154,7 +157,7 @@ EstimarGanancia <- function(x) {
   GLOBAL_iteracion <<- GLOBAL_iteracion + 1
 
   # x los hiperparametros del arbol
-  ganancia_public <- ArbolSimple( dtrain, x, GLOBAL_iteracion )
+  ganancia_public <- ArbolSimple(dtrain, x, GLOBAL_iteracion)
 
   # logueo
   xx <- x
@@ -164,7 +167,7 @@ EstimarGanancia <- function(x) {
   loguear(xx, arch = archivo_log)
 
   # para que mlrMBO tenga todo reseteado
-  set.seed( PARAM$semilla_azar )
+  set.seed(PARAM$semilla_azar)
 
   return(ganancia_public)
 }
@@ -175,27 +178,32 @@ EstimarGanancia <- function(x) {
 # Establezco el Working Directory
 setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023") # Establezco el Working Directory
 
+
+
 # cargo los datos
 dataset <- fread("./data/competencia_01.csv")
-dataset[ foto_mes==202105,  clase_ternaria:= NA ]
+dataset[foto_mes == 202105, clase_ternaria := NA]
 
 # defino la clase_binaria2
-dataset[ , clase_binaria := ifelse( clase_ternaria=="CONTINUA", "NEG", "POS" ) ]
+dataset[, clase_binaria := ifelse(clase_ternaria == "CONTINUA", "NEG", "POS")]
 
-dtrain <- dataset[foto_mes==202103]
-dapply <- dataset[foto_mes==202105]
+
+# Slices data
+dtrain <- dataset[foto_mes == 202103]
+dapply <- dataset[foto_mes == 202105]
 
 # definicion vector de pesos para oversampling
-pesos <- copy( dtrain[, ifelse( clase_ternaria=="CONTINUA",   1.0, 100.0)])
+pesos <- copy(dtrain[, ifelse(clase_ternaria == "CONTINUA", 1.0, 100.0)])
 
 # creo la carpeta donde va el experimento
 #  HT  representa  Hiperparameter Tuning
 dir.create("./exp/", showWarnings = FALSE)
-dir.create( paste0("./exp/", PARAM$experimento, "/"), 
-           showWarnings = FALSE)
+dir.create(paste0("./exp/", PARAM$experimento, "/"),
+  showWarnings = FALSE
+)
 
 # Establezco el Working Directory DEL EXPERIMENTO
-setwd( paste0("./exp/", PARAM$experimento, "/") )
+setwd(paste0("./exp/", PARAM$experimento, "/"))
 
 
 # en estos archivos quedan los resultados
@@ -237,7 +245,7 @@ ctrl <- makeMBOControl(
 )
 
 ctrl <- setMBOControlTermination(ctrl, iters = PARAM$BO_iter)
-ctrl <- setMBOControlInfill(ctrl,  crit = makeMBOInfillCritEI())
+ctrl <- setMBOControlInfill(ctrl, crit = makeMBOInfillCritEI())
 
 surr.km <- makeLearner("regr.km",
   predict.type = "se",
@@ -246,7 +254,7 @@ surr.km <- makeLearner("regr.km",
 
 
 # para que mlrMBO tenga todo reseteado
-set.seed( PARAM$semilla_azar )
+set.seed(PARAM$semilla_azar)
 
 # inicio la optimizacion bayesiana
 if (!file.exists(archivo_BO)) {
@@ -259,3 +267,9 @@ if (!file.exists(archivo_BO)) {
   run <- mboContinue(archivo_BO)
 }
 # retomo en caso que ya exista
+
+res <- fread("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/exp/HT4010/BO_log.txt")
+
+ggplot(data = res, aes(x = iteracion, y = ganancia)) +
+  geom_line(linetype = "dashed") +
+  geom_point(color = "red", size = 5)
