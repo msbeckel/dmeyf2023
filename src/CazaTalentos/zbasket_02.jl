@@ -1,6 +1,8 @@
 using Random
 
-Random.seed!(102191)
+
+
+Random.seed!(594697)
 
 # calcula cuantos encestes logra una jugadora con indice de enceste prob
 # haciendo qyt tiros libres
@@ -17,9 +19,6 @@ jugadoras = append!(mejor, peloton)
 
 # veo que tiene el vector
 jugadoras
-
-
-
 
 # hago que las 100 jugadoras tiren 10 veces cada una
 res = ftirar.(jugadoras, 10)
