@@ -6,7 +6,7 @@
 # limpio la memoria
 rm(list = ls()) # remove all objects
 gc() # garbage collection
-
+fe = TRUE
 require("data.table")
 require("rlist")
 
@@ -21,14 +21,14 @@ require("mlrMBO")
 # Defino la  Optimizacion Bayesiana
 PARAM <- list()
 
-PARAM$home <- "~/buckets/b1/"
+PARAM$home <- "/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/"
 
 PARAM$experimento <- "HT3330"
 
 # Aqui van las 10 semillas que hacen el 10-repeated
 #  si se pone una sola semilla, se esta haciendo solo 5-fold xval
 PARAM$semilla_azar <- c(
-  102191, 200177, 410551, 552581, 892237,
+  594697, 594709, 594721, 594739, 594749,
   753587, 247759, 253369, 955127, 800519
 )
 
@@ -213,7 +213,33 @@ EstimarGanancia <- function(x) {
 setwd(PARAM$home)
 
 # cargo los datos
-dataset <- fread("./datasets/competencia_01.csv")
+dataset <- fread("./data/competencia_01.csv")
+
+#feature engineering
+if(fe){
+  # Feature Engineering
+dataset[, antiguedad_edad := (cliente_antiguedad / 12) / cliente_edad]
+dataset[, nivel_mrentabilidad := ifelse(cliente_antiguedad > 11, as.numeric(mrentabilidad > (mrentabilidad_annual / 12)), as.numeric(mrentabilidad > (mrentabilidad_annual / cliente_antiguedad)))]
+dataset[, monto_transaccion := mautoservicio / ctarjeta_debito_transacciones]
+dataset[, monto_pp := ifelse(cprestamos_personales > 0, mprestamos_personales / cprestamos_personales, 0)]
+dataset[, monto_ppr := ifelse(cprestamos_prendarios > 0, mprestamos_prendarios / cprestamos_prendarios, 0)]
+dataset[, monto_ph := ifelse(cprestamos_hipotecarios > 0, mprestamos_hipotecarios / cprestamos_hipotecarios, 0)]
+dataset[, monto_pf := ifelse(cplazo_fijo > 0, (mplazo_fijo_dolares + mplazo_fijo_pesos) / cplazo_fijo, 0)]
+dataset[, monto_i1 := ifelse(cinversion1 > 0, (minversion1_pesos + minversion1_dolares) / cinversion1, 0)]
+dataset[, monto_i2 := ifelse(cinversion2 > 0, (minversion2) / cinversion1, 0)]
+dataset[, cseguro := cseguro_vida + cseguro_auto + cseguro_vivienda + cseguro_accidentes_personales]
+dataset[, ifpayroll := ifelse(cpayroll_trx > 0, 1, 0)]
+dataset[, monto_da := ifelse(ccuenta_debitos_automaticos > 0, mcuenta_debitos_automaticos / ccuenta_debitos_automaticos, 0)]
+dataset[, descuentos_comisiones := (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) / (mcomisiones_mantenimiento + mcomisiones_otras)]
+dataset[, bin_Master_mlimitecompra := as.numeric(arules::discretize(dataset$Master_mlimitecompra, method = "cluster", breaks = 5, labels = c(1, 2, 3, 4, 5)))]
+dataset[, bin_Visa_mlimitecompra := as.numeric(arules::discretize(dataset$Visa_mlimitecompra, method = "cluster", breaks = 5, labels = c(1, 2, 3, 4, 5)))]
+
+
+cols <- colnames(dataset)[grepl(pattern = "^m|^(Visa|Master)_m", colnames(dataset))]
+dataset[, (cols) := lapply(.SD, function(x){frank(x, na.last= "keep", ties.method = "dense")}), .SDcols = cols, by = foto_mes]
+
+}
+
 # entreno en 202103
 dataset <- dataset[foto_mes == 202103]
 
@@ -287,3 +313,6 @@ if (!file.exists(archivo_BO)) {
   run <- mboContinue(archivo_BO)
 }
 # retomo en caso que ya exista
+
+##
+#res = read.table("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/exp/HT3330/BO_log.txt",  row.names=NULL)
