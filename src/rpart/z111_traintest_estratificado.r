@@ -3,11 +3,14 @@ gc() # Garbage Collection
 
 require("data.table")
 require("rpart")
+options(bitmapType = "cairo")
+
+semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
 
 # reemplazar por SU semilla
-PARAM$semilla <- 102191
+PARAM$semilla <- semillas[1]
 
 #------------------------------------------------------------------------------
 # particionar agrega una columna llamada fold a un dataset
@@ -35,10 +38,10 @@ particionar <- function(
 
 # Aqui se debe poner la carpeta de la computadora local
 # Establezco el Working Directory
-setwd("X:\\gdrive\\uba2023\\")
+setwd("/home/maxibeckel/maestria_datos/dmeyf/dmeyf2023/")
 
 # cargo los datos
-dataset <- fread("./datasets/competencia_01.csv")
+dataset <- fread("./data/competencia_01.csv")
 
 # trabajo solo con los datos con clase, es decir 202103
 dataset <- dataset[ foto_mes==202103 ]
@@ -99,3 +102,4 @@ cat("Estimulos: ", estimulos, "\n")
 cat("Aciertos (BAJA+2): ", aciertos, "\n")
 
 cat("Ganancia en testing (normalizada): ", ganancia_test_normalizada, "\n")
+
