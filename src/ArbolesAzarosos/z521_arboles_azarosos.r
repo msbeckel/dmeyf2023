@@ -14,7 +14,8 @@ PARAM <- list()
 PARAM$experimento <- 5210
 
 # Establezco la semilla aleatoria, cambiar por SU primer semilla
-PARAM$semilla <- 102191
+semillas <- c(594697, 594709, 594721, 594739, 594749)
+PARAM$semilla <- semillas[1]
 
 # parameetros rpart
 PARAM$rpart_param <- list(
@@ -39,7 +40,7 @@ PARAM$num_trees_max <- 500
 setwd("~/buckets/b1/") # Establezco el Working Directory
 
 # cargo los datos
-dataset <- fread("./datasets/competencia_02.csv.gz")
+dataset <- fread("/home/ms_beckel/dmeyf2023/datasets/competencia_02.csv.gz")
 
 
 # creo la carpeta donde va el experimento
