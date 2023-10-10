@@ -29,12 +29,14 @@ options(error = function() {
 
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
-#  muy pronto esto se leera desde un archivo formato .yaml
+#  muy pronto esto se leera desde un archivo formato .
+mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
+
 PARAM <- list()
 
 PARAM$experimento <- "HT8230"
 
-PARAM$input$dataset <- "./datasets/competencia_02.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_02_fe.csv.gz"
 
 # los meses en los que vamos a entrenar
 #  mucha magia emerger de esta eleccion
@@ -44,13 +46,13 @@ PARAM$input$training <- c(202010, 202011, 202012, 202101, 202102, 202103)
 
 # un undersampling de 0.1  toma solo el 10% de los CONTINUA
 PARAM$trainingstrategy$undersampling <- 1.0
-PARAM$trainingstrategy$semilla_azar <- 102191 # Aqui poner su  primer  semilla
+PARAM$trainingstrategy$semilla_azar <- mis_semillas[1] # Aqui poner su  primer  semilla
 
 PARAM$hyperparametertuning$POS_ganancia <- 273000
 PARAM$hyperparametertuning$NEG_ganancia <- -7000
 
 # Aqui poner su segunda semilla
-PARAM$lgb_semilla <- 200177
+PARAM$lgb_semilla <- mis_semillas[2]
 #------------------------------------------------------------------------------
 
 # Hiperparametros FIJOS de  lightgbm

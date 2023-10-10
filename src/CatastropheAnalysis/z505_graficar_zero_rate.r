@@ -11,7 +11,7 @@ require("data.table")
 
 # Parametros del script
 PARAM <- list()
-PARAM$dataset <- "./datasets/competencia_02.csv.gz"
+PARAM$dataset <- "./datasets/competencia_02_fe.csv.gz"
 PARAM$experimento <- "CA5050"
 # FIN Parametros del script
 
