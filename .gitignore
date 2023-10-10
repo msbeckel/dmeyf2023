@@ -3,6 +3,7 @@
 *.csv.gz
 data
 datasets
+.tmp
 
 # Windows image file caches
 Thumbs.db
