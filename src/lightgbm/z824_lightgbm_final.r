@@ -28,7 +28,7 @@ PARAM$finalmodel$semilla <- mis_semillas[1]
 
 # hiperparametros optimizados BO
 if(FALSE){
-  bo <- fread("./exp/HT8230/BO_log.txt")
+  bo <- fread("./exp/HT8231/BO_log.txt")
   setorder(bo, -ganancia)
   bo[1,] 
 }
