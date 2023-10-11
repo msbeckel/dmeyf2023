@@ -13,23 +13,31 @@ require("lightgbm")
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
+mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
+
 PARAM <- list()
 PARAM$experimento <- "KA8240"
 
-PARAM$input$dataset <- "./datasets/competencia_02.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_02_fe.csv.gz"
 
 # meses donde se entrena el modelo
 PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
 PARAM$input$future <- c(202107) # meses donde se aplica el modelo
 
-PARAM$finalmodel$semilla <- 102191
+PARAM$finalmodel$semilla <- mis_semillas[1]
 
-# hiperparametros intencionalmente NO optimos
-PARAM$finalmodel$optim$num_iterations <- 730
-PARAM$finalmodel$optim$learning_rate <- 0.0323601846272594
-PARAM$finalmodel$optim$feature_fraction <- 0.909773795582897
-PARAM$finalmodel$optim$min_data_in_leaf <- 4637
-PARAM$finalmodel$optim$num_leaves <- 667
+# hiperparametros optimizados BO
+if(FALSE){
+  bo <- fread("./exp/HT8230/BO_log.txt")
+  setorder(bo, -ganancia)
+  bo[1,] 
+}
+
+PARAM$finalmodel$optim$num_iterations <- 245
+PARAM$finalmodel$optim$learning_rate <- 0.1460184
+PARAM$finalmodel$optim$feature_fraction <- 0.9615229
+PARAM$finalmodel$optim$min_data_in_leaf <- 36556
+PARAM$finalmodel$optim$num_leaves <- 203
 
 
 # Hiperparametros FIJOS de  lightgbm
