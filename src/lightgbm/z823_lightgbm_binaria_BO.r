@@ -34,9 +34,9 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
 
-PARAM$experimento <- "HT8230"
+PARAM$experimento <- "HT8232"
 
-PARAM$input$dataset <- "./datasets/competencia_02_fe.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
 
 # los meses en los que vamos a entrenar
 #  mucha magia emerger de esta eleccion

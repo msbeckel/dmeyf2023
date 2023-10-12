@@ -16,9 +16,9 @@ require("lightgbm")
 mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
-PARAM$experimento <- "KA8240"
+PARAM$experimento <- "KA8242"
 
-PARAM$input$dataset <- "./datasets/competencia_02_fe.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
 
 # meses donde se entrena el modelo
 PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
@@ -28,16 +28,16 @@ PARAM$finalmodel$semilla <- mis_semillas[1]
 
 # hiperparametros optimizados BO
 if(FALSE){
-  bo <- fread("./exp/HT8231/BO_log.txt")
+  bo <- fread("~/buckets/b1/exp/HT8232/BO_log.txt")
   setorder(bo, -ganancia)
   bo[1,] 
 }
 
-PARAM$finalmodel$optim$num_iterations <- 245
-PARAM$finalmodel$optim$learning_rate <- 0.1460184
-PARAM$finalmodel$optim$feature_fraction <- 0.9615229
-PARAM$finalmodel$optim$min_data_in_leaf <- 36556
-PARAM$finalmodel$optim$num_leaves <- 203
+PARAM$finalmodel$optim$num_iterations <- 426
+PARAM$finalmodel$optim$learning_rate <- 0.05761228
+PARAM$finalmodel$optim$feature_fraction <- 0.7981272
+PARAM$finalmodel$optim$min_data_in_leaf <- 7682
+PARAM$finalmodel$optim$num_leaves <- 293
 
 
 # Hiperparametros FIJOS de  lightgbm
