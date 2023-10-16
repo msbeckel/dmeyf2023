@@ -1,3 +1,9 @@
+#Indicaciones para correr este script:
+#1) El dataset utilizado puede producirse con /monday/zero_to_na.R (para tratar los errores en la toma de los datos) 
+#y /monday/z901_fe_sql.ipynb par el feature engineering.
+#2) Este R presenta los hiperparámetros seleccionados mediante BO para correr el modelo final.
+#3) criterio de corte tomado: 10500 envios.
+
 # para correr el Google Cloud
 #   8 vCPU
 #  64 GB memoria RAM
