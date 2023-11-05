@@ -14,7 +14,7 @@ require("data.table")
 setwd("~/buckets/b1/")
 
 #import dataset
-dataset <- fread("./datasets/competencia_02.csv.gz")
+dataset <- fread("./datasets/competencia_03.csv.gz")
 
 #frecuencia de 0's por variables/foto_mes
 tmp = dataset[,lapply(.SD, function(x){ ( sum( x == 0 ) / length(x) ) }),by=foto_mes]
@@ -30,4 +30,4 @@ for (i in 1:nrow(allzero)){
 }
 
 #export dataset
-fwrite(dataset, "./datasets/competencia_02_c.csv.gz")
+fwrite(dataset, "./datasets/competencia_03_c.csv.gz")
