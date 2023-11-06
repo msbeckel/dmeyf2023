@@ -19,10 +19,13 @@ require("lightgbm")
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
-mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
+mis_semillas <- c(594697, 594709, 594721, 594739, 594749,
+                  100103, 100109, 100129, 100151, 100153,
+                  100019,100043,100049,100057,100069,
+                  161729, 221729, 202789, 700241, 991107)
 
 PARAM <- list()
-PARAM$experimento <- "EC8242"
+PARAM$experimento <- "EC8245"
 
 PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
 
@@ -39,11 +42,11 @@ if(FALSE){
   bo[1,] 
 }
 
-PARAM$finalmodel$optim$num_iterations <- 426
-PARAM$finalmodel$optim$learning_rate <- 1#0.05761228
-PARAM$finalmodel$optim$feature_fraction <- 0.7981272
-PARAM$finalmodel$optim$min_data_in_leaf <- 7682
-PARAM$finalmodel$optim$num_leaves <- 293
+PARAM$finalmodel$optim$num_iterations <- 20
+PARAM$finalmodel$optim$learning_rate <- 1
+PARAM$finalmodel$optim$feature_fraction <- 0.4
+PARAM$finalmodel$optim$min_data_in_leaf <- 5000
+PARAM$finalmodel$optim$num_leaves <- 40
 
 
 # Hiperparametros FIJOS de  lightgbm
@@ -73,7 +76,7 @@ PARAM$finalmodel$lgb_basicos <- list(
   max_drop = 50, # <=0 means no limit
   skip_drop = 0.5, # 0.0 <= skip_drop <= 1.0
 
-  extra_trees = TRUE, # Magic Sauce
+  extra_trees = FALSE, # Magic Sauce
   #saque el seed
 )
 
@@ -218,9 +221,7 @@ for (i in 1:length(mis_semillas)){
   seed <- list(seed = mis_semillas[i])
   param_completo <- c(PARAM$finalmodel$lgb_basicos, PARAM$finalmodel$optim, seed)
 
-  # genero el modelo
-  param_completo <- c(PARAM$finalmodel$lgb_basicos, PARAM$finalmodel$optim)
-
+  #modelo
   modelo <- lgb.train(
     data = dtrain,
     param = param_completo,
@@ -261,6 +262,15 @@ for (i in 1:length(mis_semillas)){
   cat(paste0("\n\nSemilla\t", mis_semillas[i]))
 }
 
+dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", 1, "/")
+tb_entrega <- fread(paste0(dir_i, "prediccion.txt"))
+for (i in 2:length(mis_semillas)){
+  dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", i, "/")
+  tmp <- fread(paste0(dir_i, "prediccion.txt"))
+  tb_entrega[,paste0("prob_", i) := tmp[,prob]]
+}
+
+tb_entrega = tb_entrega[, .(prob = rowMeans(.SD)), by = .(numero_de_cliente, foto_mes), .SDcols = names(tb_entrega) %like% "prob"]
 # ordeno por probabilidad descendente
 setorder(tb_entrega, -prob)
 
@@ -270,6 +280,8 @@ setorder(tb_entrega, -prob)
 # si la palabra inteligentemente no le significa nada aun
 # suba TODOS los archivos a Kaggle
 # espera a la siguiente clase sincronica en donde el tema sera explicado
+dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
+setwd(dir_i)
 
 cortes <- seq(8000, 13000, by = 500)
 for (envios in cortes) {
