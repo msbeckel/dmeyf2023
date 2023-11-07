@@ -16,6 +16,8 @@ gc() # garbage collection
 require("data.table")
 require("lightgbm")
 
+meses <- c(201912, 202001, 202002, 202003, 202004, 202005, 202006, 202007,
+           202008, 202009, 202010, 202011, 202012, 202101, 202102, 202103, 202104, 202105)
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
@@ -25,12 +27,13 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749,
                   161729, 221729, 202789, 700241, 991107)
 
 PARAM <- list()
-PARAM$experimento <- "EC8245"
+PARAM$experimento <- "EC8246"
 
 PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
 
 # meses donde se entrena el modelo
-PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
+#PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
+PARAM$input$training <- meses
 PARAM$input$future <- c(202107) # meses donde se aplica el modelo
 
 #PARAM$finalmodel$semilla <- mis_semillas[1]
@@ -76,7 +79,7 @@ PARAM$finalmodel$lgb_basicos <- list(
   max_drop = 50, # <=0 means no limit
   skip_drop = 0.5, # 0.0 <= skip_drop <= 1.0
 
-  extra_trees = FALSE, # Magic Sauce
+  extra_trees = FALSE# Magic Sauce
   #saque el seed
 )
 
@@ -133,7 +136,6 @@ dir.create(paste0("./exp/", PARAM$experimento, "/"), showWarnings = FALSE)
 setwd(paste0("./exp/", PARAM$experimento, "/"))
 
 
-
 # dejo los datos en el formato que necesita LightGBM
 dtrain <- lgb.Dataset(
   data = data.matrix(dataset[train == 1L, campos_buenos, with = FALSE]),
@@ -141,73 +143,8 @@ dtrain <- lgb.Dataset(
 )
 
 
-# genero el modelo
-param_completo <- c(PARAM$finalmodel$lgb_basicos,
-  PARAM$finalmodel$optim)
-
-modelo <- lgb.train(
-  data = dtrain,
-  param = param_completo,
-)
-
-#--------------------------------------
-# ahora imprimo la importancia de variables
-tb_importancia <- as.data.table(lgb.importance(modelo))
-archivo_importancia <- "impo.txt"
-
-fwrite(tb_importancia,
-  file = archivo_importancia,
-  sep = "\t"
-)
-
-#--------------------------------------
-
-
-# aplico el modelo a los datos sin clase
-dapply <- dataset[foto_mes == PARAM$input$future]
-
-# aplico el modelo a los datos nuevos
-prediccion <- predict(
-  modelo,
-  data.matrix(dapply[, campos_buenos, with = FALSE])
-)
-
-# genero la tabla de entrega
-tb_entrega <- dapply[, list(numero_de_cliente, foto_mes)]
-tb_entrega[, prob := prediccion]
-
-# grabo las probabilidad del modelo
-fwrite(tb_entrega,
-  file = "prediccion.txt",
-  sep = "\t"
-)
-
-# ordeno por probabilidad descendente
-setorder(tb_entrega, -prob)
-
-
-# genero archivos con los  "envios" mejores
-# deben subirse "inteligentemente" a Kaggle para no malgastar submits
-# si la palabra inteligentemente no le significa nada aun
-# suba TODOS los archivos a Kaggle
-# espera a la siguiente clase sincronica en donde el tema sera explicado
-
-cortes <- seq(8000, 15000, by = 500)
-for (envios in cortes) {
-  tb_entrega[, Predicted := 0L]
-  tb_entrega[1:envios, Predicted := 1L]
-
-  fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-    file = paste0(PARAM$experimento, "_", envios, ".csv"),
-    sep = ","
-  )
-}
-
-cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
-
-
 ## Experimentos colaborativos: BO con LR altos (>0.9)
-for (i in 1:length(mis_semillas)){
+for (i in seq_along(mis_semillas)){
   
   #create dir
   dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", i, "/")
@@ -259,7 +196,19 @@ for (i in 1:length(mis_semillas)){
     sep = "\t"
   )
 
-  cat(paste0("\n\nSemilla\t", mis_semillas[i]))
+  #entregas
+  cortes <- seq(8000, 13000, by = 500)
+  for (envios in cortes) {
+    tb_entrega[, Predicted := 0L]
+    tb_entrega[1:envios, Predicted := 1L]
+
+    fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
+      file = paste0(PARAM$experimento, "_", envios, ".csv"),
+      sep = ","
+    )
+  }
+
+  cat(paste0("\n\nSemilla:\t", mis_semillas[i]))
 }
 
 dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", 1, "/")
@@ -293,7 +242,5 @@ for (envios in cortes) {
     sep = ","
   )
 }
-
-
 
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
