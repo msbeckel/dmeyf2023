@@ -26,7 +26,8 @@ options(error = function() {
   stop("exiting after script error")
 })
 
-
+#Valor de Learning Rate
+LR = 0.8
 
 # defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .
@@ -34,15 +35,15 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
 
-PARAM$experimento <- "HT8232"
+PARAM$experimento <- paste0("EC8232", ".",LR)
 
 PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
 
 # los meses en los que vamos a entrenar
 #  mucha magia emerger de esta eleccion
-PARAM$input$testing <- c(202105)
-PARAM$input$validation <- c(202104)
-PARAM$input$training <- c(202010, 202011, 202012, 202101, 202102, 202103)
+PARAM$input$testing <- c(202107)
+PARAM$input$validation <- c(202105)
+PARAM$input$training <- c(202012, 202101, 202102, 202103, 202304, 202304)
 
 # un undersampling de 0.1  toma solo el 10% de los CONTINUA
 PARAM$trainingstrategy$undersampling <- 1.0
@@ -83,7 +84,9 @@ PARAM$lgb_basicos <- list(
   max_drop = 50, # <=0 means no limit
   skip_drop = 0.5, # 0.0 <= skip_drop <= 1.0
 
-  extra_trees = TRUE, # Magic Sauce
+  extra_trees = FALSE, # Magic Sauce
+
+  learning_rate = LR
 
   seed = PARAM$lgb_semilla
 )
@@ -92,7 +95,6 @@ PARAM$lgb_basicos <- list(
 # Aqui se cargan los hiperparametros que se optimizan
 #  en la Bayesian Optimization
 PARAM$bo_lgb <- makeParamSet(
-  makeNumericParam("learning_rate", lower = 0.02, upper = 0.3),
   makeNumericParam("feature_fraction", lower = 0.01, upper = 1.0),
   makeIntegerParam("num_leaves", lower = 8L, upper = 1024L),
   makeIntegerParam("min_data_in_leaf", lower = 100L, upper = 50000L)
