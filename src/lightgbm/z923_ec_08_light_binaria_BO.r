@@ -86,7 +86,7 @@ PARAM$lgb_basicos <- list(
 
   extra_trees = FALSE, # Magic Sauce
 
-  learning_rate = LR
+  learning_rate = LR,
 
   seed = PARAM$lgb_semilla
 )
