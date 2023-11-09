@@ -29,12 +29,12 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749,
 PARAM <- list()
 PARAM$experimento <- "EC8246"
 
-PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_03_fe_ec.csv.gz"
 
 # meses donde se entrena el modelo
 #PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
-PARAM$input$training <- meses
-PARAM$input$future <- c(202107) # meses donde se aplica el modelo
+PARAM$input$training <- c(202011,202012,202101,202102,202103,202104)
+PARAM$input$future <- c(202106) # meses donde se aplica el modelo
 
 #PARAM$finalmodel$semilla <- mis_semillas[1]
 
@@ -197,16 +197,16 @@ for (i in seq_along(mis_semillas)){
   )
 
   #entregas
-  cortes <- seq(8000, 13000, by = 500)
-  for (envios in cortes) {
-    tb_entrega[, Predicted := 0L]
-    tb_entrega[1:envios, Predicted := 1L]
+  #cortes <- seq(8000, 13000, by = 500)
+  #for (envios in cortes) {
+  #  tb_entrega[, Predicted := 0L]
+  #  tb_entrega[1:envios, Predicted := 1L]
 
-    fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-      file = paste0(PARAM$experimento, "_", envios, ".csv"),
-      sep = ","
-    )
-  }
+  #  fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
+  #    file = paste0(PARAM$experimento, "_", envios, ".csv"),
+  #    sep = ","
+  #  )
+  #}
 
   cat(paste0("\n\nSemilla:\t", mis_semillas[i]))
 }
