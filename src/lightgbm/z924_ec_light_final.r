@@ -27,7 +27,7 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749,
                   161729, 221729, 202789, 700241, 991107)
 
 PARAM <- list()
-PARAM$experimento <- "EC8246"
+PARAM$experimento <- "EC9010"
 
 PARAM$input$dataset <- "./datasets/competencia_03_fe_ec.csv.gz"
 
@@ -39,17 +39,16 @@ PARAM$input$future <- c(202106) # meses donde se aplica el modelo
 #PARAM$finalmodel$semilla <- mis_semillas[1]
 
 # hiperparametros optimizados BO
-if(FALSE){
-  bo <- fread("~/buckets/b1/exp/EC8232/BO_log.txt")
-  setorder(bo, -ganancia)
-  bo[1,] 
-}
+bo <- fread("~/buckets/b1/exp/EC8232.1/BO_log.txt")
+setorder(bo, -ganancia)
+#bo[1,] 
 
-PARAM$finalmodel$optim$num_iterations <- 20
-PARAM$finalmodel$optim$learning_rate <- 1
-PARAM$finalmodel$optim$feature_fraction <- 0.4
-PARAM$finalmodel$optim$min_data_in_leaf <- 5000
-PARAM$finalmodel$optim$num_leaves <- 40
+
+PARAM$finalmodel$optim$num_iterations <- bo[1, num_iterations]
+PARAM$finalmodel$optim$learning_rate <- bo[1,learning_rate]
+PARAM$finalmodel$optim$feature_fraction <-  bo[1,feature_fraction]
+PARAM$finalmodel$optim$min_data_in_leaf <-  bo[1,min_data_in_leaf]
+PARAM$finalmodel$optim$num_leaves <- bo[1, num_leaves]
 
 
 # Hiperparametros FIJOS de  lightgbm
@@ -223,24 +222,30 @@ tb_entrega = tb_entrega[, .(prob = rowMeans(.SD)), by = .(numero_de_cliente, fot
 # ordeno por probabilidad descendente
 setorder(tb_entrega, -prob)
 
-
+dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
+setwd(dir_i)
+fwrite(tb_entrega,
+  file = paste0(PARAM$experimento, "_ensamble", ".csv"),
+  sep = ","
+)
 # genero archivos con los  "envios" mejores
 # deben subirse "inteligentemente" a Kaggle para no malgastar submits
 # si la palabra inteligentemente no le significa nada aun
 # suba TODOS los archivos a Kaggle
 # espera a la siguiente clase sincronica en donde el tema sera explicado
-dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
-setwd(dir_i)
+if(FALSE){
+  dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
+  setwd(dir_i)
 
-cortes <- seq(8000, 13000, by = 500)
-for (envios in cortes) {
-  tb_entrega[, Predicted := 0L]
-  tb_entrega[1:envios, Predicted := 1L]
+  cortes <- seq(8000, 13000, by = 500)
+  for (envios in cortes) {
+    tb_entrega[, Predicted := 0L]
+    tb_entrega[1:envios, Predicted := 1L]
 
-  fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-    file = paste0(PARAM$experimento, "_", envios, ".csv"),
-    sep = ","
-  )
+    fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
+      file = paste0(PARAM$experimento, "_", envios, ".csv"),
+      sep = ","
+    )
+  }
 }
-
 cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
