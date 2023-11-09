@@ -27,7 +27,7 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749,
                   161729, 221729, 202789, 700241, 991107)
 
 PARAM <- list()
-PARAM$experimento <- "EC9010"
+PARAM$experimento <- "EC9009"
 
 PARAM$input$dataset <- "./datasets/competencia_03_fe_ec.csv.gz"
 
@@ -39,7 +39,7 @@ PARAM$input$future <- c(202106) # meses donde se aplica el modelo
 #PARAM$finalmodel$semilla <- mis_semillas[1]
 
 # hiperparametros optimizados BO
-bo <- fread("~/buckets/b1/exp/EC8232.1/BO_log.txt")
+bo <- fread("~/buckets/b1/exp/EC8232.0.9/BO_log.txt")
 setorder(bo, -ganancia)
 #bo[1,] 
 
