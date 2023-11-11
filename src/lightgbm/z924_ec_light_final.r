@@ -143,16 +143,9 @@ dtrain <- lgb.Dataset(
 
 
 ## Experimentos colaborativos: BO con LR altos (>0.9)
+pred_res = dataset[foto_mes == PARAM$input$future, .(numero_de_cliente,foto_mes)]
 for (i in seq_along(mis_semillas)){
   
-  #create dir
-  dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", i, "/")
-  dir.create("/home/ms_beckel/buckets/b1/exp/", showWarnings = FALSE)
-  dir.create(dir_i, showWarnings = FALSE)
-
-  # Establezco el Working Directory DEL EXPERIMENTO
-  setwd(dir_i)
-
   #parametros
   seed <- list(seed = mis_semillas[i])
   param_completo <- c(PARAM$finalmodel$lgb_basicos, PARAM$finalmodel$optim, seed)
@@ -164,15 +157,16 @@ for (i in seq_along(mis_semillas)){
   )
 
   #--------------------------------------
-  # ahora imprimo la importancia de variables
-  tb_importancia <- as.data.table(lgb.importance(modelo))
-  archivo_importancia <- "impo.txt"
+  if(FALSE){
+    # ahora imprimo la importancia de variables
+    tb_importancia <- as.data.table(lgb.importance(modelo))
+    archivo_importancia <- "impo.txt"
 
-  fwrite(tb_importancia,
-    file = archivo_importancia,
-    sep = "\t"
-  )
-
+    fwrite(tb_importancia,
+      file = archivo_importancia,
+      sep = "\t"
+    )
+  }
   #--------------------------------------
 
 
@@ -189,63 +183,20 @@ for (i in seq_along(mis_semillas)){
   tb_entrega <- dapply[, list(numero_de_cliente, foto_mes)]
   tb_entrega[, prob := prediccion]
 
-  # grabo las probabilidad del modelo
-  fwrite(tb_entrega,
-    file = "prediccion.txt",
-    sep = "\t"
-  )
+  #add prob by seed
+  setDT(pred_res)[tb_entrega, paste0("seed", mis_semillas[i]) := i.prob, on = .(numero_de_cliente, foto_mes)]
 
-  #entregas
-  #cortes <- seq(8000, 13000, by = 500)
-  #for (envios in cortes) {
-  #  tb_entrega[, Predicted := 0L]
-  #  tb_entrega[1:envios, Predicted := 1L]
-
-  #  fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-  #    file = paste0(PARAM$experimento, "_", envios, ".csv"),
-  #    sep = ","
-  #  )
-  #}
-
-  cat(paste0("\n\nSemilla:\t", mis_semillas[i]))
+  cat(paste0("\nFinished:\t", i))
 }
 
-dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", 1, "/")
-tb_entrega <- fread(paste0(dir_i, "prediccion.txt"))
-for (i in 2:length(mis_semillas)){
-  dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/",PARAM$experimento, ".", i, "/")
-  tmp <- fread(paste0(dir_i, "prediccion.txt"))
-  tb_entrega[,paste0("prob_", i) := tmp[,prob]]
-}
 
-tb_entrega = tb_entrega[, .(prob = rowMeans(.SD)), by = .(numero_de_cliente, foto_mes), .SDcols = names(tb_entrega) %like% "prob"]
-# ordeno por probabilidad descendente
-setorder(tb_entrega, -prob)
+#Add ensamble result
+pred_res = pred_res[, .(ensamble = rowSums(.SD)), by = .(numero_de_cliente, foto_mes), .SDcols = names(pred_res) %like% "seed"]
 
-dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
-setwd(dir_i)
-fwrite(tb_entrega,
+#Export results
+fwrite(pred_res,
   file = paste0(PARAM$experimento, "_ensamble", ".csv"),
   sep = ","
 )
-# genero archivos con los  "envios" mejores
-# deben subirse "inteligentemente" a Kaggle para no malgastar submits
-# si la palabra inteligentemente no le significa nada aun
-# suba TODOS los archivos a Kaggle
-# espera a la siguiente clase sincronica en donde el tema sera explicado
-if(FALSE){
-  dir_i <- paste0("/home/ms_beckel/buckets/b1/exp/", PARAM$experimento, "/")
-  setwd(dir_i)
 
-  cortes <- seq(8000, 13000, by = 500)
-  for (envios in cortes) {
-    tb_entrega[, Predicted := 0L]
-    tb_entrega[1:envios, Predicted := 1L]
-
-    fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-      file = paste0(PARAM$experimento, "_", envios, ".csv"),
-      sep = ","
-    )
-  }
-}
-cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
+cat("\n\nScript finished\n")
