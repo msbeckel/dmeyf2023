@@ -191,11 +191,11 @@ for (i in seq_along(mis_semillas)){
 
 
 #Add ensamble result
-pred_res = pred_res[, .(ensamble = rowSums(.SD)), by = .(numero_de_cliente, foto_mes), .SDcols = names(pred_res) %like% "seed"]
+pred_res = cbind(pred_res, pred_res[, .(ensamble = rowSums(.SD)), .SDcols = names(pred_res) %like% "seed"])
 
 #Export results
 fwrite(pred_res,
-  file = paste0(PARAM$experimento, "_ensamble", ".csv"),
+  file = paste0("ensamble.csv"),
   sep = ","
 )
 

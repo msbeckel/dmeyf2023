@@ -11,7 +11,7 @@ gc() # garbage collection
 
 require("data.table")
 require("rlist")
-
+require("ggplot2")
 require("lightgbm")
 
 # paquetes necesarios para la Bayesian Optimization
@@ -29,7 +29,7 @@ options(error = function() {
 
 PARAM <- list()
 
-PARAM$experimento <- "EC9010"
+PARAM$experimento <- "EC9009"
 
 PARAM$input$dataset <- "./datasets/competencia_03_fe_ec.csv.gz"
 PARAM$input$testing <- c(202106)
@@ -38,34 +38,56 @@ PARAM$hyperparametertuning$POS_ganancia <- 273000
 PARAM$hyperparametertuning$NEG_ganancia <- -7000
 
 # Aqui empieza el programa
-setwd("~/buckets/b1")
+setwd(paste0("~/buckets/b1/exp/", PARAM$experimento))
 
 # cargo el dataset donde voy a entrenar
 dataset <- fread(PARAM$input$dataset, stringsAsFactors = TRUE)
 
-prob = fread('~/buckets/b1/exp/EC9010/EC9010_ensamble.csv')
-
-head(dataset[foto_mes == '202106',.(numero_de_cliente, foto_mes, clase_ternaria)])
-head(prob)
-mes = '202106'
+prob = fread('~/buckets/b1/exp/EC9009/ensamble.csv')
 
 setDT(prob)[dataset, clase_ternaria := i.clase_ternaria, on = .(numero_de_cliente, foto_mes)]
 
 #Func
 calc_ganancia <- function(df, th, pos, neg){
-    setorder(df, -prob)
-    df <- df[1:th]
-    df <- df[,ganancia := ifelse(clase_ternaria == 'BAJA+2', pos, neg)]
+  df <- df[1:th]
+  df <- df[,ganancia := ifelse(clase_ternaria == 'BAJA+2', pos, neg)]
+  
+  ganancia_total = sum(df[,ganancia])
+  
+  return(ganancia_total)
+}
 
-    ganancia_total = sum(df[,ganancia])
+cortes = 1000:18000
+gan_ensamble <- sapply(colnames(prob)[3:23],function(x) NULL)
 
-    return(ganancia_total)
+gan_ensamble <- as.data.table(cortes)
+
+
+for(i in 3:23){
+  tmp = prob[,c(colnames(prob)[i], "clase_ternaria"), with=FALSE]  
+  colnames(tmp)[1] = "prob"
+  setorder(tmp, -prob)
+  gan_i <- sapply(cortes, function(ii){calc_ganancia(tmp, th = ii, pos = 273000, neg = -7000)})  
+  gan_i <- as.data.table(gan_i)
+  
+  gan_ensamble <- cbind(gan_ensamble, gan_i)
+  colnames(gan_ensamble)[ncol(gan_ensamble)] = colnames(prob)[i]
+  
+  print(paste0("Iter: ", i))
 }
 
 
-trend_ganancia <- sapply(1000:21000,function(i){calc_ganancia(prob, th = i, pos = 273000, neg = -7000)})
+#Export results
+fwrite(gan_ensamble,
+       file = paste0("ganancia_ensamble.csv"),
+       sep = ","
+)
 
-calc_ganancia(prob, th = 20000, pos = 273000, neg = -7000)
+#Plot
+#melt data frame into long format
+df <- melt(gan_ensamble ,  id.vars = 'cortes', variable.name = 'series')
 
-plot(x=1000:21000, y=trend_ganancia)
-max(trend_ganancia)
+#create line plot for each column in data frame
+ggplot(df, aes(cortes, value)) +
+  geom_line(aes(colour = series))+
+  theme_light()
