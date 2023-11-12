@@ -87,7 +87,15 @@ fwrite(gan_ensamble,
 #melt data frame into long format
 df <- melt(gan_ensamble ,  id.vars = 'cortes', variable.name = 'series')
 
+colv        <- c(scales::hue_pal()(20), "#000000")
+names(colv) <- colnames(gan_ensamble)[2:22]
+
 #create line plot for each column in data frame
-ggplot(df, aes(cortes, value)) +
-  geom_line(aes(colour = series))+
-  theme_light()
+p <- ggplot(data = df, aes(cortes, value, color = series)) +
+       geom_line()+
+       scale_color_manual(values = colv, guide="none") +
+       theme_light()
+
+png(filename="ensamble.png")
+plot(p)
+dev.off()
