@@ -29,7 +29,7 @@ options(error = function() {
 
 PARAM <- list()
 
-PARAM$experimento <- "EC9009"
+PARAM$experimento <- "EC9010"
 
 PARAM$input$dataset <- "~/buckets/b1/datasets/competencia_03_fe_ec.csv.gz"
 PARAM$input$testing <- c(202107)
@@ -43,7 +43,7 @@ setwd(paste0("~/buckets/b1/exp/", PARAM$experimento))
 # cargo el dataset donde voy a entrenar
 dataset <- fread(PARAM$input$dataset, stringsAsFactors = TRUE)
 
-prob = fread('~/buckets/b1/exp/EC9009/ensamble.csv')
+prob = fread('~/buckets/b1/exp/EC9010/ensamble.csv')
 
 setDT(prob)[dataset, clase_ternaria := i.clase_ternaria, on = .(numero_de_cliente, foto_mes)]
 
