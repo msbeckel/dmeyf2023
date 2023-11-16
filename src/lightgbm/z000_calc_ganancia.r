@@ -31,8 +31,8 @@ PARAM <- list()
 
 PARAM$experimento <- "EC9009"
 
-PARAM$input$dataset <- "./datasets/competencia_03_fe_ec.csv.gz"
-PARAM$input$testing <- c(202106)
+PARAM$input$dataset <- "~/buckets/b1/datasets/competencia_03_fe_ec.csv.gz"
+PARAM$input$testing <- c(202107)
 
 PARAM$hyperparametertuning$POS_ganancia <- 273000
 PARAM$hyperparametertuning$NEG_ganancia <- -7000
