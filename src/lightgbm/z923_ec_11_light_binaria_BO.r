@@ -192,8 +192,8 @@ EstimarGanancia_lightgbm <- function(x) {
   # hago la union de los parametros basicos y los moviles que vienen en x
   param_completo <- c(PARAM$lgb_basicos, x)
 
-  param_completo$early_stopping_rounds <-
-    as.integer(400 + 4 / param_completo$learning_rate)
+  param_completo$early_stopping_rounds <- 200
+    #as.integer(400 + 4 / param_completo$learning_rate)
 
   GLOBAL_arbol <<- 0L
   GLOBAL_gan_max <<- -Inf
