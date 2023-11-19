@@ -85,6 +85,8 @@ fwrite(gan_ensamble,
 
 #Plot
 #melt data frame into long format
+gan_ensamble <-  cbind(cortes = gan_ensamble[,cortes], gan_ensamble[, lapply(.SD, function(x){x/1000000}), .SDcols = colnames(gan_ensamble)[-1]])
+
 df <- melt(gan_ensamble ,  id.vars = 'cortes', variable.name = 'series')
 
 colv        <- c(scales::hue_pal()(20), "#000000")
@@ -93,9 +95,10 @@ names(colv) <- colnames(gan_ensamble)[2:22]
 #create line plot for each column in data frame
 p <- ggplot(data = df, aes(cortes, value, color = series)) +
        geom_line()+
+       scale_y_continuous(name="Ganancia (M)", limits=c(0, 160),breaks = scales::pretty_breaks(n = 10))+
        scale_color_manual(values = colv, guide="none") +
        theme_light()
-
+p
 png(filename="ensamble.png")
 plot(p)
 dev.off()
