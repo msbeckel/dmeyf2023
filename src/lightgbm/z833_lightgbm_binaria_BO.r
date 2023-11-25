@@ -35,7 +35,7 @@ mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 PARAM <- list()
 
 #Modificado para EC ----
-PARAM$experimento <- "HU8230"
+PARAM$experimento <- "HU8430"
 
 PARAM$input$dataset <- "./datasets/competencia_03_c_fe_2.csv.gz"
 
@@ -46,7 +46,7 @@ PARAM$input$validation <- c(202106)
 PARAM$input$training <- c(202010, 202011, 202012, 202101, 202102, 202103, 202104, 202105)
 
 # un undersampling de 0.1  toma solo el 10% de los CONTINUA
-PARAM$trainingstrategy$undersampling <- 1.0
+PARAM$trainingstrategy$undersampling <- 0.1#1.0
 PARAM$trainingstrategy$semilla_azar <- mis_semillas[1] # Aqui poner su  primer  semilla
 
 PARAM$hyperparametertuning$POS_ganancia <- 273000
@@ -74,9 +74,9 @@ PARAM$lgb_basicos <- list(
   max_bin = 31L, # lo debo dejar fijo, no participa de la BO
   num_iterations = 9999, # un numero muy grande, lo limita early_stopping_rounds
 
-  #bagging_fraction = 1.0, # 0.0 < bagging_fraction <= 1.0
+  bagging_fraction = 1.0, # 0.0 < bagging_fraction <= 1.0
   pos_bagging_fraction = 1.0, # 0.0 < pos_bagging_fraction <= 1.0
-  #neg_bagging_fraction = 1.0, # 0.0 < neg_bagging_fraction <= 1.0
+  neg_bagging_fraction = 1.0, # 0.0 < neg_bagging_fraction <= 1.0
   is_unbalance = FALSE, #
   scale_pos_weight = 1.0, # scale_pos_weight > 0.0
 
@@ -95,8 +95,8 @@ PARAM$lgb_basicos <- list(
 PARAM$bo_lgb <- makeParamSet(
   makeNumericParam("learning_rate", lower = 0.02, upper = 0.3),
   makeNumericParam("feature_fraction", lower = 0.01, upper = 1.0),
-  makeNumericParam("bagging_fraction", lower = 0.01, upper = 0.99),
-  makeNumericParam("neg_bagging_fraction", lower = 0.1, upper = 1.0),
+  #makeNumericParam("bagging_freq", lower = 0.01, upper = 0.99),
+  #makeNumericParam("neg_bagging_fraction", lower = 0.1, upper = 1.0),
   makeIntegerParam("num_leaves", lower = 8L, upper = 1024L),
   makeIntegerParam("min_data_in_leaf", lower = 100L, upper = 50000L)
 )

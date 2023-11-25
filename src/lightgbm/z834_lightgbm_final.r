@@ -22,28 +22,28 @@ require("lightgbm")
 mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
-PARAM$experimento <- "KA8242"
+PARAM$experimento <- "KU8442"
 
-PARAM$input$dataset <- "./datasets/competencia_02_c_fe.csv.gz"
+PARAM$input$dataset <- "./datasets/competencia_03_c_fe_2.csv.gz"
 
 # meses donde se entrena el modelo
-PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105)
-PARAM$input$future <- c(202107) # meses donde se aplica el modelo
+PARAM$input$training <- c(202012, 202101, 202102, 202103, 202104, 202105, 202106, 202107)
+PARAM$input$future <- c(202109) # meses donde se aplica el modelo
 
 PARAM$finalmodel$semilla <- mis_semillas[1]
 
 # hiperparametros optimizados BO
-if(FALSE){
-  bo <- fread("~/buckets/b1/exp/HT8232/BO_log.txt")
+if(TRUE){
+  bo <- fread("~/buckets/b1/exp/HU8430/BO_log.txt")
   setorder(bo, -ganancia)
   bo[1,] 
 }
 
-PARAM$finalmodel$optim$num_iterations <- 426
-PARAM$finalmodel$optim$learning_rate <- 0.05761228
-PARAM$finalmodel$optim$feature_fraction <- 0.7981272
-PARAM$finalmodel$optim$min_data_in_leaf <- 7682
-PARAM$finalmodel$optim$num_leaves <- 293
+PARAM$finalmodel$optim$num_iterations <- bo[1, num_iterations]
+PARAM$finalmodel$optim$learning_rate <- bo[1,learning_rate]
+PARAM$finalmodel$optim$feature_fraction <- bo[1,feature_fraction]
+PARAM$finalmodel$optim$min_data_in_leaf <- bo[1,min_data_in_leaf]
+PARAM$finalmodel$optim$num_leaves <- bo[1, num_leaves]
 
 
 # Hiperparametros FIJOS de  lightgbm
