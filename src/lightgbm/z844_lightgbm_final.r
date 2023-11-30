@@ -6,7 +6,7 @@
 
 # para correr el Google Cloud
 #   8 vCPU
-#  64 GB memoria RAM
+#  128 GB memoria RAM
 
 
 # limpio la memoria
@@ -22,75 +22,65 @@ require("lightgbm")
 mis_semillas <- c(594697, 594709, 594721, 594739, 594749)
 
 PARAM <- list()
-PARAM$experimento <- "KU8742"
+PARAM$experimento <- "KU8842"
 
+#FE generado a partir de src/z901_fe_sql.ipynb
 PARAM$input$dataset <- "./datasets/competencia_03_c_fe_2.csv.gz"
 
 # meses donde se entrena el modelo
-PARAM$input$training <- c(201909, 201910, 201911, 201912, 202001, 202002,202009,202010,202011,202012,202101,202102,202103,202104,202105,202106,202107)
+PARAM$input$training <- c(201901, 201902, 201903, 201904, 201905, 201906, 
+                          201907, 201908, 201909, 201910, 201911, 201912,
+                          202010, 202011, 202012, 202101, 202102, 202103, 
+                          202104, 202105, , 202106, 202107)
+
 PARAM$input$future <- c(202109) # meses donde se aplica el modelo
 
 PARAM$finalmodel$semilla <- mis_semillas[1]
 
-# hiperparametros optimizados BO
-if(FALSE){
-  bo <- fread("~/buckets/b1/exp/HU8430/BO_log.txt")
-  setorder(bo, -ganancia)
-  bo[1,]
 
-  PARAM$finalmodel$optim$num_iterations <- bo[1, num_iterations]
-  PARAM$finalmodel$optim$learning_rate <- bo[1,learning_rate]
-  PARAM$finalmodel$optim$feature_fraction <- bo[1,feature_fraction]
-  PARAM$finalmodel$optim$min_data_in_leaf <- bo[1,min_data_in_leaf]
-  PARAM$finalmodel$optim$num_leaves <- bo[1, num_leaves]
- 
-}
+#Se construirá un modelo a partir de un ensamble de los modelos ganadores de la competencia 2.
+# Se busco en el github de los mejores puestos el modelo final declarado y se construye una tabla
+# con los hiperparámetros obtenidos en cada caso.
 
-
+#En el caso de Juan Raman se obtuvo el archivo BO_log.txt, en el resto se extrajo los hiperparámetros
+#a partir de los scripts.
 raman <- fread("/home/ms_beckel/dmeyf2023/src/ensamble/BO_log.txt")
 setorder(raman, -ganancia)
-models <- raman[1:3,.(num_iterations, learning_rate, feature_fraction, min_data_in_leaf, num_leaves)]
 
-#
+#En el caso de Raman (ganador de la competencia) me quedo con los primeros 3 modelos
+models <- raman[1:3,.(num_iterations, learning_rate, feature_fraction, min_data_in_leaf, num_leaves)]
 serpa <- list("num_iterations" = 2360, 
               "learning_rate" = 0.055101382, 
               "feature_fraction" = 0.153838929, 
               "min_data_in_leaf" = 14319, 
               "num_leaves" = 728)
-
 flores <- list("num_iterations" = 6875, 
               "learning_rate" = 0.0133326486877864, 
               "feature_fraction" = 0.216652156817687, 
               "min_data_in_leaf" = 516, 
               "num_leaves" = 685)
-
-
 casali1 <- list("num_iterations" = 829, 
               "learning_rate" = 0.0314795407476228, 
               "feature_fraction" = 0.575871678909783, 
               "min_data_in_leaf" = 5336, 
               "num_leaves" = 478)
-
-
 casali2 <- list("num_iterations" = 411, 
               "learning_rate" = 0.090567777671882, 
               "feature_fraction" = 0.870907307849918, 
               "min_data_in_leaf" = 9496, 
               "num_leaves" = 1024)
-
-
 marchesini <- list("num_iterations" = 253, 
               "learning_rate" = 0.060332943, 
               "feature_fraction" = 0.550117901, 
               "min_data_in_leaf" = 6648, 
               "num_leaves" = 263)
-
 telsesser <- list("num_iterations" = 1859, 
               "learning_rate" = 0.0221787360433459, 
               "feature_fraction" = 0.999869931759323, 
               "min_data_in_leaf" = 15159, 
               "num_leaves" = 700)
 
+#
 models <- rbind(models, serpa, flores, casali1, casali2, marchesini, telsesser)
 
 # Hiperparametros FIJOS de  lightgbm
@@ -135,22 +125,6 @@ setwd("~/buckets/b1")
 dataset <- fread(PARAM$input$dataset, stringsAsFactors = TRUE)
 
 
-# Catastrophe Analysis  -------------------------------------------------------
-# deben ir cosas de este estilo
-#   dataset[foto_mes == 202006, active_quarter := NA]
-
-# Data Drifting
-# por ahora, no hago nada
-
-
-# Feature Engineering Historico  ----------------------------------------------
-#   aqui deben calcularse los  lags y  lag_delta
-#   Sin lags no hay paraiso ! corta la bocha
-#   https://rdrr.io/cran/data.table/man/shift.html
-
-
-#--------------------------------------
-
 # paso la clase a binaria que tome valores {0,1}  enteros
 # set trabaja con la clase  POS = { BAJA+1, BAJA+2 }
 # esta estrategia es MUY importante
@@ -186,7 +160,7 @@ dtrain <- lgb.Dataset(
 )
 
 
-## Experimentos colaborativos: BO con LR altos (>0.9)
+## pred_res guarda las prob obtenidas en cada modelo.
 pred_res = dataset[foto_mes == PARAM$input$future, .(numero_de_cliente,foto_mes)]
 
 for (i in 1:nrow(models)){
@@ -208,20 +182,6 @@ for (i in 1:nrow(models)){
     param = param_completo,
   )
 
-  #--------------------------------------
-  if(FALSE){
-    # ahora imprimo la importancia de variables
-    tb_importancia <- as.data.table(lgb.importance(modelo))
-    archivo_importancia <- "impo.txt"
-
-    fwrite(tb_importancia,
-      file = archivo_importancia,
-      sep = "\t"
-    )
-  }
-  #--------------------------------------
-
-
   # aplico el modelo a los datos sin clase
   dapply <- dataset[foto_mes == PARAM$input$future]
 
@@ -235,36 +195,33 @@ for (i in 1:nrow(models)){
   tb_entrega <- dapply[, list(numero_de_cliente, foto_mes)]
   tb_entrega[, prob := prediccion]
 
-  #add prob by seed
+  #agrego la prob del modelo a la tabla
   setDT(pred_res)[tb_entrega, paste0("model", i) := i.prob, on = .(numero_de_cliente, foto_mes)]
 
   cat(paste0("\nFinished:\t", i))
 }
 
-
-#Add ensamble result
+#Calculo la prob para el ensamble de los modelos
 pred_res = cbind(pred_res, pred_res[, .(ensamble = rowSums(.SD)), .SDcols = names(pred_res) %like% "model"])
 
-#Export results
+#Exporto resultados
 fwrite(pred_res,
   file = paste0("ensamble.csv"),
   sep = ","
 )
 
-cat("\n\nScript finished\n")
+#Ordeno por el ensamble
+setorder(pred_res, -ensamble)
 
 #Entregas Kaggle
-if(FALSE){
-  cortes <- seq(8000, 15000, by = 500)
-  for (envios in cortes) {
-    tb_entrega[, Predicted := 0L]
-    tb_entrega[1:envios, Predicted := 1L]
-
-    fwrite(tb_entrega[, list(numero_de_cliente, Predicted)],
-      file = paste0(PARAM$experimento, "_", envios, ".csv"),
-      sep = ","
-    )
-  }
-
-  cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
+cortes <- seq(10000, 13000, by = 500)
+for (envios in cortes) {
+  pred_res[, Predicted := 0L]
+  pred_res[1:envios, Predicted := 1L]
+  fwrite(pred_res[, list(numero_de_cliente, Predicted)],
+    file = paste0(PARAM$experimento, "_", envios, ".csv"),
+    sep = ","
+  )
 }
+
+cat("\n\nLa generacion de los archivos para Kaggle ha terminado\n")
